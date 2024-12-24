@@ -34,4 +34,4 @@ jobs:
           script: |
             cd /path/to/deploy && rm -rf *
             scp -i ${{ secrets.SSH_PRIVATE_KEY }} target/*.war ubuntu@13.49.80.131:**/*
-            java -jar **/*.war
+            java -war **/*.war
