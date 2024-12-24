@@ -32,6 +32,20 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            cd /path/to/deploy && rm -rf *
-            scp -i ${{ secrets.SSH_PRIVATE_KEY }} target/*.war ubuntu@13.49.80.131:**/*
-            java -war **/*.war
+            # Install Tomcat on the server
+            sudo apt-get update
+            sudo apt-get install -y openjdk-17-jdk
+            sudo apt-get install -y wget
+            wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.69/bin/apache-tomcat-9.0.69.tar.gz
+            sudo tar -xvzf apache-tomcat-9.0.69.tar.gz -C /opt/
+            sudo mv /opt/apache-tomcat-9.0.69 /opt/tomcat
+            sudo chmod +x /opt/tomcat/bin/*.sh
+            sudo sh /opt/tomcat/bin/startup.sh
+            
+            # Deploy WAR file to Tomcat's webapps directory
+            rm -rf /opt/tomcat/webapps/*
+            scp -i ${{ secrets.SSH_PRIVATE_KEY }} target/*.war ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/tomcat/webapps/index.jsp.war
+
+            # Restart Tomcat (optional)
+            sudo sh /opt/tomcat/bin/shutdown.sh
+            sudo sh /opt/tomcat/bin/startup.sh
