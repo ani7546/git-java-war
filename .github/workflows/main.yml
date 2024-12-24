@@ -43,8 +43,8 @@ jobs:
             sudo sh /opt/tomcat/bin/startup.sh
             
             # Deploy WAR file to Tomcat's webapps directory
-            rm -rf /opt/tomcat/webapps/*
-            scp -i ${{ secrets.SSH_PRIVATE_KEY }} target/*.war ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/tomcat/webapps/index.jsp.war
+            rm -rf /opt/tomcat/webapps/index.jsp
+            scp -i ${{ secrets.SSH_PRIVATE_KEY }} target/index.jsp.war ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/tomcat/webapps/index.jsp.war
 
             # Restart Tomcat (optional)
             sudo sh /opt/tomcat/bin/shutdown.sh
