@@ -33,5 +33,5 @@ jobs:
           port: 22
           script: |
             cd /path/to/deploy && rm -rf *
-            scp -i ${{ secrets.SSH_PRIVATE_KEY }} target/*.jar ubuntu@yourserver:**/*
-            java -jar /path/to/deploy/yourapp.jar
+            scp -i ${{ secrets.SSH_PRIVATE_KEY }} target/*.jar ubuntu@13.51.156.222:**/*
+            java -jar **/*.jar
