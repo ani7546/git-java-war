@@ -35,13 +35,14 @@ jobs:
             sudo apt-get install -y wget
 
             # Step 2: Download and install Tomcat 10 (Updated URL)
-            TOMCAT_VERSION="10.0.20"
-            TOMCAT_URL="https://dlcdn.apache.org/tomcat/tomcat-10/v10.0.20/bin/apache-tomcat-10.0.20.tar.gz"
+            TOMCAT_VERSION="10.1.0"
+            TOMCAT_URL="https://dlcdn.apache.org/tomcat/tomcat-10/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz"
             wget $TOMCAT_URL
             if [ $? -ne 0 ]; then
               echo "Tomcat download failed. Exiting."
               exit 1
             fi
+
             sudo tar xzvf apache-tomcat-10*tar.gz -C /opt/tomcat --strip-components=1
             sudo mv /opt/apache-tomcat-${TOMCAT_VERSION} /opt/tomcat
             sudo chown -R tomcat:tomcat /opt/tomcat/
@@ -50,7 +51,7 @@ jobs:
 
             # Step 3: Deploy the WAR file to Tomcat's webapps directory
             rm -rf /opt/tomcat/webapps/*
-            scp -i ${{ secrets.SSH_PRIVATE_KEY }} target/my-maven-webapp.war ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/tomcat/webapps/my-maven-webapp.war
+            cp target/my-maven-webapp.war /opt/tomcat/webapps/my-maven-webapp.war
 
             # Step 4: Restart Tomcat to deploy the application
             sudo sh /opt/tomcat/bin/shutdown.sh
