@@ -39,7 +39,7 @@ jobs:
             sudo apt-get install -y openjdk-17-jdk wget
 
             # Step 2: Download and install Tomcat 10
-            TOMCAT_VERSION="10.1.0"  # Updated to a valid version
+            TOMCAT_VERSION="10.0.29"  # Updated to a valid version
             TOMCAT_URL="https://dlcdn.apache.org/tomcat/tomcat-10/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz"
             wget $TOMCAT_URL
             if [ $? -ne 0 ]; then
