@@ -9,21 +9,22 @@ jobs:
   deploy-java:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Check out the code from the repository
       - name: Check out code
         uses: actions/checkout@v3
 
-      # Set up Java with Maven 
+      # Step 2: Set up JDK 17 using the Temurin distribution
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # Build the Java application using Maven
+      # Step 3: Build the Java application using Maven
       - name: Build with Maven
         run: mvn clean install
 
-      # Deploy Java Application using appleboy/ssh-action
+      # Step 4: Deploy the Java application to the server using appleboy/ssh-action
       - name: Deploy Java Application to server
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -32,20 +33,22 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            # Install Tomcat on the server
+            # Step 1: Install Tomcat and JDK 17 on the remote server
             sudo apt-get update
             sudo apt-get install -y openjdk-17-jdk
             sudo apt-get install -y wget
+            
+            # Step 2: Download and install Tomcat 9
             wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.69/bin/apache-tomcat-9.0.69.tar.gz
             sudo tar -xvzf apache-tomcat-9.0.69.tar.gz -C /opt/
             sudo mv /opt/apache-tomcat-9.0.69 /opt/tomcat
             sudo chmod +x /opt/tomcat/bin/*.sh
             sudo sh /opt/tomcat/bin/startup.sh
             
-            # Deploy WAR file to Tomcat's webapps directory
+            # Step 3: Deploy the WAR file to Tomcat's webapps directory
             rm -rf /opt/tomcat/webapps/*
             scp -i ${{ secrets.SSH_PRIVATE_KEY }} target/my-maven-webapp.war ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/tomcat/webapps/my-maven-webapp.war
 
-            # Restart Tomcat (optional)
+            # Step 4: Restart Tomcat to deploy the application
             sudo sh /opt/tomcat/bin/shutdown.sh
             sudo sh /opt/tomcat/bin/startup.sh
