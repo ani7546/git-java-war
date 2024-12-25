@@ -31,11 +31,10 @@ jobs:
           script: |
             # Step 1: Install OpenJDK 17 and wget
             sudo apt-get update
-            sudo apt-get install -y openjdk-17-jdk
-            sudo apt-get install -y wget
+            sudo apt-get install -y openjdk-17-jdk wget
 
-            # Step 2: Download and install Tomcat 10 (Updated URL)
-            TOMCAT_VERSION="10.1.3"
+            # Step 2: Download and install Tomcat 10
+            TOMCAT_VERSION="10.1.0"  # Update to a valid version
             TOMCAT_URL="https://dlcdn.apache.org/tomcat/tomcat-10/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz"
             wget $TOMCAT_URL
             if [ $? -ne 0 ]; then
@@ -43,23 +42,26 @@ jobs:
               exit 1
             fi
 
+            # Install Tomcat
             sudo mkdir /opt/tomcat
             sudo tar -xzf apache-tomcat-${TOMCAT_VERSION}.tar.gz -C /opt/tomcat --strip-components=1
-            sudo mv /opt/apache-tomcat-${TOMCAT_VERSION} /opt/tomcat
-            sudo chown -R tomcat:tomcat /opt/tomcat/
+            sudo chown -R $USER:$USER /opt/tomcat/
             sudo chmod -R u+x /opt/tomcat/bin
+
+            # Start Tomcat service
             sudo sh /opt/tomcat/bin/startup.sh
             sudo systemctl daemon-reload
             sudo systemctl start tomcat
             sudo systemctl enable tomcat
+
+            # Allow Tomcat's default port (8080)
             sudo ufw allow 8080
             sudo ufw reload
 
             # Step 3: Deploy the WAR file to Tomcat's webapps directory
             rm -rf /opt/tomcat/webapps/*
-            cp target/my-maven-webapp.war /opt/tomcat/webapps/my-maven-webapp.war
+            cp /home/${USER}/workspace/my-maven-webapp/target/my-maven-webapp.war /opt/tomcat/webapps/my-maven-webapp.war
 
             # Step 4: Restart Tomcat to deploy the application
             sudo sh /opt/tomcat/bin/shutdown.sh
             sudo sh /opt/tomcat/bin/startup.sh
-
