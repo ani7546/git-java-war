@@ -32,26 +32,18 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  # Set the SSH private key in GitHub secrets
 
-      # Step 5: Copy the entire project to the server
-      - name: Copy project files to the server
+      # Step 5: Copy the repository files to the server's Tomcat webapps directory
+      - name: Copy repository files to the server's Tomcat webapps directory
         run: |
           scp -o StrictHostKeyChecking=no -P 22 -r . ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/tomcat/webapps/
-
       # Step 6: SSH into the server and restart Tomcat to deploy the WAR file
-      - name: Deploy WAR file and restart Tomcat via SSH
+      - name: Deploy WAR file via SSH
         run: |
           ssh -o StrictHostKeyChecking=no -p 22 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             # Ensure OpenJDK is installed (adjust if needed)
             sudo apt-get update
             sudo apt-get install -y openjdk-17-jdk wget
-
-            # Stop Tomcat (if running)
-            sudo systemctl stop tomcat
-
-            # Remove old deployments (optional cleanup, adjust as needed)
-            sudo rm -rf /opt/tomcat/webapps/*
-
-            # Restart Tomcat to deploy the new files
-            sudo systemctl start tomcat
+            #  Tomcat to deploy the new files
+            sudo systemctl daemon-reload
           EOF
 
