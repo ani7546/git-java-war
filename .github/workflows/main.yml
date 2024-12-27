@@ -22,7 +22,7 @@ jobs:
           distribution: 'temurin'  # Using Temurin distribution
           cache: maven  # Cache Maven dependencies for faster builds
 
-      # Step 3: Build the project using Maven
+      # Step 3: Build the project using Maven (optional if only copying files)
       - name: Build with Maven
         run: mvn -B clean package --file pom.xml  # Clean and build the project
 
@@ -32,11 +32,11 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  # Set the SSH private key in GitHub secrets
 
-      # Step 5: Copy the WAR file to the Tomcat webapps directory
-      - name: Copy WAR file to the server's Tomcat webapps directory
+      # Step 5: Copy the repository files to the server's Tomcat webapps directory
+      - name: Copy repository files to the server's Tomcat webapps directory
         run: |
-          scp -o StrictHostKeyChecking=no -P 22 target/*.war ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/tomcat/webapps/
-          
+          scp -o StrictHostKeyChecking=no -P 22 -r . ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/tomcat/webapps/
+
       # Step 6: SSH into the server and restart Tomcat to deploy the WAR file
       - name: Deploy WAR file via SSH
         run: |
@@ -45,6 +45,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y openjdk-17-jdk wget
 
-            # Restart Tomcat to deploy the new WAR file
-            sudo systemctl daemon-reload  
+            #  Tomcat to deploy the new files
+            sudo systemctl daemon-reload
           EOF
+
