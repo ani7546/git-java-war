@@ -32,21 +32,19 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  # Set the SSH private key in GitHub secrets
 
-      # Step 5: Copy the WAR artifact to the server
-      - name: Copy WAR file to the server
+      # Step 5: Copy the WAR file to the Tomcat webapps directory
+      - name: Copy WAR file to the server's Tomcat webapps directory
         run: |
-          scp -o StrictHostKeyChecking=no -P 22 target/*.war ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/webapps/  # Adjust the path as necessary
-
-      # Step 6: SSH into the server and deploy the Java web application
+          scp -o StrictHostKeyChecking=no -P 22 target/*.war ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/tomcat/webapps/
+          
+      # Step 6: SSH into the server and restart Tomcat to deploy the WAR file
       - name: Deploy WAR file via SSH
         run: |
           ssh -o StrictHostKeyChecking=no -p 22 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            # Install OpenJDK if not already installed
+            # Ensure OpenJDK is installed (adjust if needed)
             sudo apt-get update
             sudo apt-get install -y openjdk-17-jdk wget
 
-            # Restart the Tomcat service to deploy the WAR
-            # Tomcat is installed at /opt/tomcat
-            sudo systemctl restart tomcat  
-      
+            # Restart Tomcat to deploy the new WAR file
+            sudo systemctl restart tomcat  # Restart Tomcat to deploy the WAR
           EOF
