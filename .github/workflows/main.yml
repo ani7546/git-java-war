@@ -10,40 +10,36 @@ jobs:
     runs-on: ubuntu-latest  # Use an Ubuntu runner for the GitHub Actions job
     
     steps:
-      # Step 1: Check out the code
       - name: Check out code
         uses: actions/checkout@v3
 
-      # Step 2: Set up JDK 21 for building the project (adjust if needed)
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
           java-version: '21'
-          distribution: 'temurin'  # Using Temurin distribution
-          cache: maven  # Cache Maven dependencies for faster builds
+          distribution: 'temurin'
+          cache: maven
 
-      # Step 3: Build the project using Maven (optional if only copying files)
       - name: Build with Maven
         run: mvn -B clean package --file pom.xml  # Clean and build the project
 
-      # Step 4: Add SSH private key for deployment
       - name: Add SSH private key to the agent
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  # Set the SSH private key in GitHub secrets
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # Step 5: Copy the repository files to the server's Tomcat webapps directory
-      - name: Copy repository files to the server's Tomcat webapps directory
+      - name: Copy WAR file to the server's Tomcat webapps directory
         run: |
-          scp -o StrictHostKeyChecking=no -P 22 -r . ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/tomcat/webapps/
-      # Step 6: SSH into the server and restart Tomcat to deploy the WAR file
-      - name: Deploy WAR file via SSH
+          scp -o StrictHostKeyChecking=no -P 22 target/*.war ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/tomcat/webapps/
+
+      - name: Tomcat to deploy the WAR file
         run: |
           ssh -o StrictHostKeyChecking=no -p 22 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            # Ensure OpenJDK is installed (adjust if needed)
+            # Ensure OpenJDK 21 is installed
             sudo apt-get update
-            sudo apt-get install -y openjdk-17-jdk wget
-            #  Tomcat to deploy the new files
+            sudo apt-get install -y openjdk-21-jdk wget
+            # Tomcat to deploy the WAR file
             sudo systemctl daemon-reload
           EOF
+
 
