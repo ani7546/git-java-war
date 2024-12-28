@@ -1,0 +1,97 @@
+name: Deploy Java Maven App to AWS Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install --update
+          aws --version
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Allow SSH Access from Runner IP
+        run: |
+          IP=$(curl -s https://api64.ipify.org)
+          aws ec2 authorize-security-group-ingress \
+            --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${IP}/32 \
+            --region ${{ secrets.AWS_REGION }}
+      - name: Test SSH Connection
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.AWS_SERVER_HOST }}
+          username: ${{ secrets.AWS_SERVER_USER }}
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
+            echo "SSH connection successful"
+
+
+      - name: Copy Files to Server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.AWS_SERVER_HOST }}
+          username: ${{ secrets.AWS_SERVER_USER }}
+          key: ${{ secrets.AWS_SSH_KEY }}
+          passphrase: "" 
+          source: "./"
+          target: "~/java-app"
+
+      - name: Install Java and Maven
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.AWS_SERVER_HOST }}
+          username: ${{ secrets.AWS_SERVER_USER }}
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
+            sudo apt update
+            sudo apt install -y openjdk-17-jdk 
+            wget https://dlcdn.apache.org/maven/maven-3/3.9.5/binaries/apache-maven-3.9.5-bin.tar.gz
+            sudo tar xzf apache-maven-3.9.5-bin.tar.gz -C /opt
+            sudo rm -f /usr/bin/mvn
+            sudo ln -s /opt/apache-maven-3.9.5/bin/mvn /usr/bin/mvn
+            mvn -version
+            echo "Java, Maven installed and started"
+
+
+      - name: Build and Deploy Java Maven App
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.AWS_SERVER_HOST }}
+          username: ${{ secrets.AWS_SERVER_USER }}
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
+            cd ~/java-app
+             mvn clean install
+            java -jar target/*.jar &
+
+
+      - name: Revoke SSH Access for Runner IP
+        run: |
+          IP=$(curl -s https://api64.ipify.org)
+          aws ec2 revoke-security-group-ingress \
+            --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${IP}/32 \
+            --region ${{ secrets.AWS_REGION }}
